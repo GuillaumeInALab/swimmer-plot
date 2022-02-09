@@ -1,0 +1,120 @@
+---
+ title: "Swimmer Plot"
+ author: "Guillaume P. Andrieu"
+ date: "`r Sys.Date()`"
+ output:
+ prettydoc::html_pretty:
+    theme: architect
+    toc: true
+    highlight: github
+---
+
+Version 1.0.1
+
+**R version**: "`r R.version.string`"
+**Bioconductor version**: "`r BiocManager::version()`"
+**swimplot**: "`r packageVersion("swimplot")`"
+     
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE, message = FALSE, warning= FALSE)
+``` 
+
+```{r clean up}
+rm(list = ls())
+```
+
+```{r libraries}
+if(!require(needs))
+  {install.packages("needs" )}
+library(needs)
+
+needs("tidyverse", "swimplot", "MedBrewer")
+``` 
+
+```{r custom functions}
+
+``` 
+
+```{r data loading}
+# Load Data
+clinicalData <- read.csv(file.choose(), header = T)
+
+clinicalData <- within(clinicalData, {
+ cr = factor(cr, levels = c(1,0), labels = c("Yes", "No"))
+ allograft = factor(allograft, levels = c(1, 0), labels = c("Yes", "No"))
+ relapse = factor(relapse, levels = c(1, 0), labels = c("Yes", "No"))
+ died = factor(died, levels = c(1, 0), labels = c("Yes", "No"))
+ alive = factor(died, levels = c("Yes", "No"), labels = c(NA, 1))
+ efsevent = factor(efsevent, levels = c(1, 0), labels = c("Yes", "No"))
+})
+``` 
+
+```{r basic swimmer plot}
+basic_plot <- swimmer_plot(df=clinicalData,
+                           id='protocol_number',
+                           end='os',
+                           name_fill = "pheno_summary",
+                           #stratify = "",
+                           id_order='pheno_summary',
+                           width=.85)+
+ scale_fill_manual(values = med.brewer("Wellspring"))
+
+basic_plot
+
+ggsave(plot = basic_plot, filename = "figures/Basic Swimmer Plot.pdf", width = 7, height = 5)
+```
+
+
+```{r detailed swimmer plot}
+
+#Added EFS
+detailed_efs_plot <- basic_plot+ 
+ swimmer_points(df_points= clinicalData,
+                id='protocol_number',
+                time='efs',
+                name_shape ='efsevent',
+                size=1,
+                fill='white',
+                col='black')+
+ scale_fill_manual(values = med.brewer("Wellspring"))
+
+detailed_efs_plot
+
+#Added Relapse
+detailed_rel_plot <- basic_plot+ 
+ swimmer_points(df_points= clinicalData,
+                id='protocol_number',
+                time='cir',
+                name_shape ='relapse',
+                size=1,
+                fill='white',
+                col='black')+
+ scale_fill_manual(values = med.brewer("Wellspring"))
+
+detailed_rel_plot
+
+#Added Died
+detailed_died_plot <- basic_plot+ 
+ swimmer_arrows(df_arrows=clinicalData,
+                id='protocol_number',
+                arrow_start='os',
+                cont = 'alive',
+                type = "open",
+                cex=0.2)+
+ scale_fill_manual(values = med.brewer("Wellspring"))
+
+detailed_died_plot
+
+```
+
+```{r debug zone}
+# DEBUG ZONE --------------------------------------------------------------
+#
+#
+# Here you can experiment some codes.
+# Clean this section when your satisfied with your code
+#
+#
+# END DEBUG ZONE ----------------------------------------------------------
+``` 
+
